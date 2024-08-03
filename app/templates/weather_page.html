@@ -1,0 +1,38 @@
+
+{% extends "template.html" %}
+
+{% block body_content %}
+<div>
+        <h1>The weather in {{ payload[0] }} is: </h1>
+            <table>
+              <tbody>
+		<tr>
+              <td> Mood: </td>
+                        <td> | </td>
+              {% for j in range(1, 8)  %}
+		      {% if payload[2][j] >= 27 %}
+		      <td>&#127958;</td>
+		      {% elif 27 > payload[2][j] > 0 %}
+		      <td>&#9729;</td>
+		      {% else %}
+		      <td>&#10052;</td>
+		      {% endif %}
+                        <td> | </td>
+              {% endfor %}
+		</tr>
+              {% for j in range(1, len)  %}
+                    <tr>
+                        {% for item in payload[j] %}
+                        <td> {{ item }} </td>
+                        <td> | </td>
+                        {% endfor %}
+                    </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          <form method="GET"
+              action="{{ url_for('home_page') }}">
+            <button type="submit">return</button>
+        </form>
+    </div>
+{% endblock %}

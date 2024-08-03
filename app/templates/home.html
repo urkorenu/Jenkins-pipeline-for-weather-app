@@ -1,0 +1,16 @@
+{% extends "template.html" %}
+
+{% block body_content %}
+<div>
+    <form method="POST"
+          action="{{ url_for('home_page') }}">
+        <input type="text"
+               name="location"
+               placeholder="Location">
+        <button type="submit">submit</button>
+        {% if error %}
+        <p style="color:red;">Invalid location.</p>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
