@@ -2,10 +2,6 @@ def dockerImageApp = ''
 def dockerImageNginx = ''
 def appContainerId = ''
 def nginxContainerId = ''
-def COLOR_MAP = [
-    'FAILURE': 'danger',
-    'SUCCESS': 'good'
-]
 
 pipeline {
     environment {
@@ -97,7 +93,7 @@ pipeline {
         success {
             slackSend(
                 channel: slackChannelSuccess,
-                color: COLOR_MAP[currentBuild.currentResult],
+                color: good,
                 message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
             )
             updateGitlabCommitStatus name: 'build', state: 'success'
@@ -105,7 +101,7 @@ pipeline {
         failure {
             slackSend(
                 channel: slackChannelFailure,
-                color: COLOR_MAP[currentBuild.currentResult],
+                color: danger,
                 message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
             )
             updateGitlabCommitStatus name: 'build', state: 'failed'
