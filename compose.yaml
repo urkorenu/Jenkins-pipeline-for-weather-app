@@ -1,9 +1,9 @@
 services:
     app:
-      image: urkoren/do19:194
+      image: urkoren/do19:latest
       deploy:
         replicas: 2
     nginx:
-      image: urkoren/app-nginx:194
+      image: urkoren/app-nginx:latest
       ports:
         - "8989:8989"

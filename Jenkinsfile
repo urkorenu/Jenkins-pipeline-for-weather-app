@@ -1,5 +1,7 @@
 def dockerImageApp = ''
+def dockerImageAppLatest = ''
 def dockerImageNginx = ''
+def dockerImageNginxLatest = ''
 def appContainerId = ''
 def nginxContainerId = ''
 
@@ -36,7 +38,9 @@ pipeline {
                     steps {
                         script {
                             dockerImageApp = docker.build("${registry_app}:${BUILD_NUMBER}", "./app")
+                            dockerImageAppLatest = docker.build("${registry_app}:latest", "./app")
                             dockerImageNginx = docker.build("${registry_nginx}:${BUILD_NUMBER}", "./nginx")
+                            dockerImageNginxLatest = docker.build("${registry_nginx}:latest", "./nginx")
                         }
                     }
                 }
@@ -55,7 +59,9 @@ pipeline {
                 script {
                     docker.withRegistry('', registryCredential) {
                         dockerImageApp.push()
+                        dockerImageAppLatest.push()
                         dockerImageNginx.push()
+                        dockerImageNginxLatest.push()
                     }
                 }
             }
@@ -83,8 +89,8 @@ pipeline {
         always {
             script {
                 try {
-                    sh "docker stop ${appContainerId} && docker rm ${appContainerId}"
-                    sh "docker stop ${nginxContainerId} && docker rm ${nginxContainerId}"
+                    sh "docker stop ${appContainerId} && docker rm ${appContainerId} && docker rm ${appContainerIdLatest}"
+                    sh "docker stop ${nginxContainerId} && docker rm ${nginxContainerId} && docker rm ${nginxContainerIdLatest}"
                 } catch (Exception err) {
                     echo "Error during container cleanup: ${err.getMessage()}"
                 }
