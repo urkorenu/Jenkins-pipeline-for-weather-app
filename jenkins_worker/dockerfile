@@ -19,4 +19,6 @@ RUN chmod 666 /var/run/docker.sock
 
 USER jenkins
 
+EXPOSE 50000
+
 CMD ["bash"]
