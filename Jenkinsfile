@@ -11,7 +11,14 @@ pipeline {
         slackChannelSuccess = '#success-builds'
         slackChannelFailure = '#fail-builds'
     }
-    agent any
+    agent {
+        docker {
+            label 'worker'
+            image "urkoren/pipeline-worker:1"
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+
+    }
     stages {
         stage("Clone Git Repository") {
             steps {
