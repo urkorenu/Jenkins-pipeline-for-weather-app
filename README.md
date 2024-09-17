@@ -10,11 +10,13 @@ The pipeline consists of the following nodes:
 - **Jenkins Master**: Receives the push from GitLab and triggers the worker node.
 - **Jenkins Worker**: Executes the pipeline steps.
 - **Deployment Instance**: The target instance where the application is deployed if the process completes successfully.
+- **NAT Instance**: NAT instance that enable trafic from the private to the internet.
 
 ## Network Configuration
 
-- **Public Subnet**: Contains the Jenkins Master and GitLab instances. These instances are behind a NAT Gateway and are accessible through an Application Load Balancer (ALB).
-- **Private Subnet**: Contains the Jenkins Worker and the Production (Deployment) Instance. These instances are isolated from direct internet access and communicate with the public subnet via the NAT Gateway.
+- **Public Subnet**: Contains the  NAT instance.
+- **Private Subnet**: Contains the Jenkins Worker, Jenkins Master, GitLab and the Production (Deployment) Instance. These instances are isolated from direct internet access and communicate with the public subnet via the NAT Instance
+  and are accessible through an Application Load Balancer (ALB).
 
 ## Node Configuration
 
@@ -22,14 +24,14 @@ The pipeline consists of the following nodes:
 - **Purpose**: To manage the source code repository and send triggers to start the pipeline.
 
 **Setup**:
-- Host GitLab in a container on an EC2 instance within the public subnet.
+- Host GitLab in a container on an EC2 instance within the private subnet.
 - Use an Elastic IP for consistent access.
 
 ### Node 2: Jenkins Master
 - **Purpose**: To receive the push from GitLab and trigger the Jenkins worker node.
 
 **Setup**:
-- Host Jenkins Master in a container on an EC2 instance within the public subnet.
+- Host Jenkins Master in a container on an EC2 instance within the private subnet.
 - Set up Jenkins Master using Docker Compose.
 - Ensure that the Jenkins Master can be accessed via the Application Load Balancer (ALB).
 
