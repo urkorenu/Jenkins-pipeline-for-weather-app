@@ -5,6 +5,9 @@ Main module for weather app, api interface
 import datetime
 from functools import lru_cache
 import requests
+import json
+import os
+import ast
 from deep_translator import GoogleTranslator
 from config import KEY
 
@@ -23,7 +26,7 @@ class WeatherApp:
 
     @classmethod
     @lru_cache(maxsize=32)
-    def get_weather_data(cls, location: str, date: datetime) :
+    def get_weather_data(cls, location: str, date: datetime):
         """
         Cached function!
         Sends a request, Convert it to json and call format_data with the jsoned dict
@@ -39,8 +42,19 @@ class WeatherApp:
             f"{cls.URL}/{location}/{cls.QUERY}{KEY}&contentType=json"
         )
         if response.status_code == 200:
-            return cls.format_data(response.json())
+            data = cls.format_data(response.json())
+            file1 = open(f"history/{location}-{date}.txt", "w")
+            json.dump(data, file1)
+            return data
         return False
+
+    @classmethod
+    def format_file(cls, filename: str):
+        file_path = os.path.join("history", filename)
+
+        with open(file_path, "r") as file:
+            content = file.read()
+            return ast.literal_eval(content)
 
     @classmethod
     def format_data(cls, response: dict) -> list:

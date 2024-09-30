@@ -1,9 +1,6 @@
 **/**/*.md 
-**/**/*.out
 **/**/*.gch
-**/**/*.txt
 **/**/.idea
 **/**/__pycache__
-**/**/*.o
 **/**/.DS_STORE
 **/**/*terraform*

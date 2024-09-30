@@ -13,4 +13,12 @@
         {% endif %}
     </form>
 </div>
+
+<div class="history-section">
+    <form method="POST" action="{{ url_for('home_page') }}">
+        <h2>History:</h2>
+        <button type="submit">View History</button>
+    </form>
+</div>
+
 {% endblock %}

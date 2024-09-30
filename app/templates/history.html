@@ -1,0 +1,23 @@
+{% extends "template.html" %}
+
+{% block body_content %}
+<div>
+    <form method="POST"
+          action="{{ url_for('history') }}">
+
+    <select class="dropbtn" name="choice">
+        {% for choice in files %}
+            <option value="{{ choice }}">{{ choice }}</option>
+        {% endfor %}
+    </select>
+        <button type="submit">submit</button>
+
+    </form>
+</div>
+
+<form method="GET"
+      action="{{ url_for('home_page') }}">
+    <button type="submit">return</button>
+</form>
+
+{% endblock %}
