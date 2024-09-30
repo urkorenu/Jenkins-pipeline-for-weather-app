@@ -34,7 +34,7 @@ def history():
 
     files = get_files()
     if request.method == "GET":
-        return render_template("history.html", files=files)
+        return render_template("history.html", files=files, bg_color=bg_color)
     if request.method == "POST":
         location = request.form.get("choice")
         return redirect(url_for("post_location", type="file", location=location))
@@ -67,6 +67,7 @@ def post_location():
         payload=payload,
         len=len(payload),
         title=f"Weather of: {location}",
+        bg_color=bg_color
     )
 
 

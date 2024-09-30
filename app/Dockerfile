@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install wheel gunicorn flask deep-translator 
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 EXPOSE 5001
 
