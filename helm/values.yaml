@@ -1,0 +1,29 @@
+# General app name
+appName: weather-app
+
+# This will set the replicaset count 
+replicaCount: 4
+
+image:
+  # Name of the repo 
+  repository: urkoren
+
+  # Name of the image
+  myimage: do19
+
+  # Tag of the image
+  tag: 200
+
+ingress:
+  # Host url
+  host: a2cc7898e48964f1b81d08766978fdfb-855513384.eu-north-1.elb.amazonaws.com
+
+# This is for setting up a service 
+service:
+  # Name of the service
+  name: app-service
+  # This sets the service type 
+  type: NodePort
+  # This sets the ports 
+  port: 80
+  targetPort: 5001

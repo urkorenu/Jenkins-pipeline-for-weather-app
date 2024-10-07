@@ -6,110 +6,119 @@ pipeline {
     environment {
         registry_app = "urkoren/do19"
         registryCredential = 'docker-cred'
-        deploy_host = "172.31.33.25"
         deploy_user = "ec2-user"
         slackChannelSuccess = '#success-builds'
         slackChannelFailure = '#fail-builds'
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')  
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        AWS_DEFAULT_REGION = 'eu-north-1'
     }
     agent {
         docker {
-            label 'worker'
-            image "urkoren/pipeline-worker:1"
+            label 'node_for_docker'
+            image 'urkoren/jenkins-worker:1'
             args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
 
     }
-    stages {
-        stage("Clone Git Repository") {
-            steps {
-                updateGitlabCommitStatus name: 'build', state: 'pending'
-                cleanWs()
-                checkout scmGit(branches: [[name: env.GIT_BRANCH]],
+stages {
+    stage("Clone Git Repository") {
+        steps {
+            // cleanWs()
+            checkout scmGit(branches: [[name: 'refs/heads/main']],
                 extensions: [],
-                userRemoteConfigs: [[credentialsId: 'git-cred',
-                url: 'http://51.21.112.83/do19/weather_app']])
-            }
-        }
-        stage("Testing and Building") {
-            parallel {
-                stage("Testing with Pylint") {
-                    when {
-                        anyOf {
-                            branch 'develop'
-                            branch pattern: "feature/.*"
-                        }
-                    }
-                    steps {
-                        sh "/venv/bin/pylint --output-format=parseable --fail-under=5 --disable=E0401 app/"
-                    }
+                userRemoteConfigs: [[credentialsId: 'git-cred2',
+                url: 'http://13.50.133.63/root/weatherapp']])
+        
+            script {
+                sh '''
+                #!/bin/bash
+                echo "Running shell script"
+                git config --global --add safe.directory /home/ubuntu/workspace/weather-app-pipeline
+                '''
+            
+                // Run git command and capture output
+                def branchOutput = sh(script: "git branch -r --contains origin/main || echo 'No branches found'", returnStdout: true).trim()
+                if (branchOutput.contains('No branches found')) {
+                    error("No branches found that contain 'origin/main'")
+                } else {
+                    BRANCH_NAME = branchOutput
+                    echo "Branch: ${BRANCH_NAME}"  
                 }
-                stage("Build Docker Images") {
-                    when {
-                        anyOf {
-                            branch 'develop'
-                            branch pattern: "feature/.*"
-                            branch 'release/*'
-                            branch 'hotfix/*'
-                            branch 'main'
-                        }
-                    }
-                    steps {
-                        script {
-                            dockerImageApp = docker.build("${registry_app}:${BUILD_NUMBER}", "./app")
-                            dockerImageAppLatest = docker.build("${registry_app}:latest", "./app")
-                        }
-                    }
+            }
+
+        }
+    }
+
+
+        
+
+        stage("Build Docker Images") {
+            steps {
+                script {
+                    dockerImageApp = docker.build("${registry_app}:${BUILD_NUMBER}", "./app")
+                    dockerImageAppLatest = docker.build("${registry_app}:latest", "./app")
                 }
             }
         }
+        
         stage('Running Images') {
-            when {
-                anyOf {
-                    branch 'develop'
-                    branch pattern: "feature/.*"
-                    branch 'release/*'
-                    branch 'hotfix/*'
-                    branch 'main'
-                }
-            }
             steps {
                 script {
                     appContainerId = sh(script: 'docker run -p 5001:5001 -d "${registry_app}:${BUILD_NUMBER}"', returnStdout: true).trim()
                 }
             }
         }
-        stage('Push Images') {
+        // stage('Push Images') {
+        //     when {
+        //         expression { BRANCH_NAME == 'origin/main' }
+        //     }
+        //     steps {
+        //         script {
+        //             docker.withRegistry('', registryCredential) {
+        //                 dockerImageApp.push()
+        //                 dockerImageAppLatest.push()
+        //             }
+        //         }
+        //     }
+        // }
+         stage('Setup EKS') {
             when {
-                branch 'main'
+                expression { BRANCH_NAME == 'origin/main' }
             }
             steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        dockerImageApp.push()
-                        dockerImageAppLatest.push()
-                    }
-                }
+                sh '''
+                aws eks update-kubeconfig --name production-test-cluster --region $AWS_DEFAULT_REGION
+                '''
             }
         }
-        stage('Deploy') {
+        stage('Helm Deploy') {
             when {
-                branch 'main'
+                expression { BRANCH_NAME == 'origin/main' }
             }
             steps {
                 script {
-                    sshagent(['ssh-app']) {
-                        sh "scp -o StrictHostKeyChecking=no compose.yaml ${deploy_user}@${deploy_host}:/home/${deploy_user}/docker-compose.yml"
-                        sh "scp -o StrictHostKeyChecking=no nginx/flask.conf ${deploy_user}@${deploy_host}:/home/${deploy_user}/flask.conf"
-                        sh "ssh -o StrictHostKeyChecking=no ${deploy_user}@${deploy_host} docker-compose down"
-                        sleep 10
-                        try {
-                            sh "ssh -o StrictHostKeyChecking=no ${deploy_user}@${deploy_host} docker rmi -f \$(docker images -aq)"
-                        } catch (Exception err) {
-                            echo "Error during image cleanup: ${err.getMessage()}"
-                        }
-                        sh "ssh -o StrictHostKeyChecking=no ${deploy_user}@${deploy_host} docker-compose pull"
-                        sh "ssh -o StrictHostKeyChecking=no ${deploy_user}@${deploy_host} docker-compose up -d"
-                    }
+                    sh '''
+                    
+                    helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+                    helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver/
+                    helm repo update
+                    helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
+                        --namespace kube-system \
+                        --set enableVolumeScheduling=true \
+                        --set enableVolumeResizing=true \
+                        --set enableVolumeSnapshot=true
+                    '''
+                    sh 'kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/name=ingress-nginx --timeout=120s'
+
+                    // Extract the Load Balancer DNS name using AWS CLI in the Groovy script
+                    def lbDns = sh(script: 'kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"', returnStdout: true).trim()
+                    
+                    sh """
+                    helm upgrade --install "my-release" "./helm" --set ingress.host=${lbDns}
+                    """
+                    
+                    echo "Helm deployment completed successfully with Load Balancer DNS: ${lbDns}"
                 }
             }
         }
@@ -124,22 +133,22 @@ pipeline {
                 }
             }
         }
-        success {
-            slackSend(
-                channel: slackChannelSuccess,
-                color: 'good',
-                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
-            )
-            updateGitlabCommitStatus name: 'build', state: 'success'
-        }
-        failure {
-            slackSend(
-                channel: slackChannelFailure,
-                color: 'danger',
-                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
-            )
-            updateGitlabCommitStatus name: 'build', state: 'failed'
-        }
+        // success {
+        //     slackSend(
+        //         channel: slackChannelSuccess,
+        //         color: 'good',
+        //         message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        //     )
+        //     updateGitlabCommitStatus name: 'build', state: 'success'
+        // }
+        // failure {
+        //     slackSend(
+        //         channel: slackChannelFailure,
+        //         color: 'danger',
+        //         message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        //     )
+        //     updateGitlabCommitStatus name: 'build', state: 'failed'
+        // }
     }
 }
 

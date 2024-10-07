@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+data:
+  BG_COLOR: "red"
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config2
+data:
+  BG_COLOR: "blue"
