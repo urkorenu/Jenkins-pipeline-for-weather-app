@@ -1,7 +1,8 @@
 resource "aws_internet_gateway" "igw" {
-  vpc_id = var.vpc_id
+  vpc_id = aws_vpc.main.id
+
   tags = {
-    Name = "jenkins-igw"
+    Name = "${local.env}"
   }
 }
 
