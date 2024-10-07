@@ -1,24 +1,19 @@
-FROM jenkins/jenkins:lts
+FROM docker:24.0.4-cli
 
-USER root
+# Install Python, pip, bash, git, curl, and AWS CLI
+RUN apk add --no-cache python3 py3-pip bash git curl openssl aws-cli
 
-RUN apt-get update && \
-    apt-get install -y \
-        python3 \
-        python3-pip \
-        curl \
-        python3-venv \
-        docker.io
+# Install pylint and requests
+RUN pip3 install pylint requests
 
-RUN python3 -m venv venv && \
-    /venv/bin/pip install pylint
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
 
-COPY /var/run/docker.sock /var/run/docker.sock
+# Install Helm
+RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-RUN chmod 666 /var/run/docker.sock
+# Verify installations
+RUN kubectl version --client && helm version
 
-USER jenkins
-
-EXPOSE 50000
-
-CMD ["bash"]
