@@ -1,5 +1,4 @@
 def dockerImageApp = ''
-def dockerImageAppLatest = ''
 def appContainerId = ''
 
 pipeline {
