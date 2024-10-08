@@ -22,7 +22,7 @@ pipeline {
     stages {
         stage("Clone Git Repository") {
             steps {
-                cleanWs()
+                // cleanWs()
                 checkout scmGit(
                     branches: [[name: 'refs/heads/main']],
                     extensions: [],
@@ -73,7 +73,7 @@ pipeline {
         stage('Connectivity Test') {
             steps {
                 script {
-                    def result = sh(script: "python3 check_connectivity.py", returnStatus: true)
+                    def result = sh(script: "python3 app/tests/check_connectivity.py", returnStatus: true)
 
                     if (result != 200) {
                         error "Connectivity test failed"
@@ -91,7 +91,6 @@ pipeline {
                 script {
                     docker.withRegistry('', registryCredential) {
                         dockerImageApp.push()
-                        dockerImageAppLatest.push()
                     }
                 }
             }
