@@ -1,8 +1,19 @@
 # Jenkins Pipeline for Application Deployment
 
-This README documents the process of setting up and running a Jenkins pipeline for deploying an application. The pipeline involves four EC2 instances running in containers, each playing a specific role.
+This README documents the process of setting up and running a Jenkins pipeline for deploying an application. The pipeline involves five EC2 instances running in containers, each playing a specific role.
 
-## Overview
+## Infrastructure Management
+
+### Terraform
+
+The infrastructure is provisioned and managed via **Terraform**, ensuring the automated setup and configuration of the environment. This includes the creation of the VPC, subnets, security groups, and the EKS cluster itself.
+
+**Terraform Setup**:
+
+1. **Install Terraform**: Ensure Terraform is installed locally or on the Jenkins worker node.
+2. **Define Terraform Configuration**: In the `tf/` directory, define the configuration files for provisioning the AWS infrastructure (VPC, subnets, NAT gateway, EKS cluster, etc.).
+
+## Pipeline Overview
 
 The pipeline consists of the following nodes:
 
@@ -10,37 +21,39 @@ The pipeline consists of the following nodes:
 - **Jenkins Master**: Receives the push from GitLab and triggers the worker node.
 - **Jenkins Worker**: Executes the pipeline steps.
 - **Deployment Instance**: The target instance where the application is deployed if the process completes successfully.
-- **NAT Instance**: NAT instance that enable trafic from the private to the internet.
+- **NAT Instance**: A NAT instance that enables traffic from the private subnet to the internet.
 
 ## Network Configuration
 
-- **Public Subnet**: Contains the  NAT instance.
-- **Private Subnet**: Contains the Jenkins Worker, Jenkins Master, GitLab and the Production (Deployment) Instance. These instances are isolated from direct internet access and communicate with the public subnet via the NAT Instance
-  and are accessible through an Application Load Balancer (ALB).
+- **Public Subnet**: Contains the NAT instance, which provides internet access to instances in the private subnet.
+- **Private Subnet**: Contains the Jenkins Worker, Jenkins Master, GitLab, and the Deployment Instance. These instances are isolated from direct internet access and communicate with the public subnet via the NAT Instance and are accessible through an Application Load Balancer (ALB).
+
+
+   
 
 ## Node Configuration
 
 ### Node 1: GitLab
-- **Purpose**: To manage the source code repository and send triggers to start the pipeline.
+- **Purpose**: Manages the source code repository and sends triggers to start the pipeline.
 
 **Setup**:
 - Host GitLab in a container on an EC2 instance within the private subnet.
 - Use an Elastic IP for consistent access.
 
 ### Node 2: Jenkins Master
-- **Purpose**: To receive the push from GitLab and trigger the Jenkins worker node.
+- **Purpose**: Receives the push from GitLab and triggers the Jenkins Worker node.
 
 **Setup**:
 - Host Jenkins Master in a container on an EC2 instance within the private subnet.
 - Set up Jenkins Master using Docker Compose.
-- Ensure that the Jenkins Master can be accessed via the Application Load Balancer (ALB).
+- Ensure that the Jenkins Master is accessible via the Application Load Balancer (ALB).
 
 ### Node 3: Jenkins Worker
-- **Purpose**: To execute the pipeline steps.
+- **Purpose**: Executes the pipeline steps.
 
 **Setup**:
 - Host Jenkins Worker in a container on an EC2 instance within the private subnet.
-- Configure the worker to connect to the Jenkins Master.
+- Configure the Worker to connect to the Jenkins Master.
 - Set up the Jenkins Worker using a Dockerfile.
 
 ### Node 4: Deployment Instance
@@ -49,6 +62,13 @@ The pipeline consists of the following nodes:
 **Setup**:
 - Host the deployment environment in a container on an EC2 instance within the private subnet.
 - Ensure the environment is configured to receive and run the deployed application.
+
+### Node 5: NAT Instance
+- **Purpose**: Provides internet access for instances in the private subnet.
+
+**Setup**:
+- Host the NAT instance in the public subnet.
+- Ensure proper routing and security group configuration for secure internet access.
 
 ## Pipeline Configuration
 
@@ -114,6 +134,5 @@ Setting up the container:
 
 **Jenkins Worker**:
 
-1. Insert the private key into jenkins mater credentials and use it in the pipeline
-
+1. Insert the private key into Jenkins master credentials and use it in the pipeline.
 
