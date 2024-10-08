@@ -6,7 +6,6 @@ pipeline {
     environment {
         registry_app = "urkoren/do19"
         registryCredential = 'docker-cred'
-        deploy_user = "ec2-user"
         slackChannelSuccess = '#success-builds'
         slackChannelFailure = '#fail-builds'
         AWS_ACCESS_KEY_ID = credentials('aws-access-key')
