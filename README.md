@@ -15,18 +15,31 @@ The infrastructure is provisioned and managed via **Terraform**, ensuring the au
 
 ## Pipeline Overview
 
-The pipeline consists of the following nodes:
+The pipeline is designed for seamless application deployment using a combination of tools and services. It involves the following nodes and processes:
 
-- **GitLab**: Sends triggers to start the pipeline.
-- **Jenkins Master**: Receives the push from GitLab and triggers the worker node.
-- **Jenkins Worker**: Executes the pipeline steps.
-- **Deployment Instance**: The target instance where the application is deployed if the process completes successfully.
-- **NAT Instance**: A NAT instance that enables traffic from the private subnet to the internet.
+- **GitLab**: Serves as the source control and CI/CD trigger. Code changes in GitLab trigger the Jenkins pipeline through webhooks.
+  
+- **Jenkins Master**: Acts as the orchestrator, receiving the webhook triggers from GitLab and managing the overall flow of the pipeline. The Jenkins master delegates tasks to the worker node, including building Docker images, running Terraform, and deploying to EKS using Helm.
 
-## Network Configuration
+- **Jenkins Worker**: Executes the tasks in the pipeline, including:
+  1. Cloning the GitLab repository.
+  2. Building and pushing Docker images to the registry.
+  3. Applying infrastructure changes via **Terraform**, including setting up or updating the AWS VPC, subnets, NAT gateway, and the **EKS cluster**.
+  4. Deploying the application to the EKS cluster using **Helm**.
+  
+- **Deployment Instance**: The application is deployed to the Kubernetes cluster (EKS) via Helm, making it available for end-users.
 
-- **Public Subnet**: Contains the NAT instance, which provides internet access to instances in the private subnet.
-- **Private Subnet**: Contains the Jenkins Worker, Jenkins Master, GitLab, and the Deployment Instance. These instances are isolated from direct internet access and communicate with the public subnet via the NAT Instance and are accessible through an Application Load Balancer (ALB).
+- **NAT Instance**: This instance resides in the public subnet and provides internet access for instances in the private subnet, such as the Jenkins worker and deployment instances. It allows for communication with AWS services and external resources.
+
+### Network Topology
+- **Public Subnet**: Contains the NAT instance, which routes internet traffic to instances in the private subnet.
+- **Private Subnet**: Hosts the Jenkins worker, Jenkins master, GitLab, and the deployment instance. These are isolated from direct internet access and communicate with the public subnet via the NAT instance.
+
+### Deployment Steps:
+1. **GitLab Trigger**: A push or merge request in GitLab triggers the Jenkins pipeline.
+2. **Terraform Infrastructure**: The pipeline provisions or updates AWS infrastructure using **Terraform**, including the VPC, subnets, and EKS cluster.
+3. **Docker Build**: The application is containerized using Docker, and the images are pushed to a Docker registry.
+4. **EKS and Helm Deployment**: The EKS cluster is updated, and the application is deployed using **Helm**, including the configuration of ingress and services.
 
 
    
@@ -72,67 +85,4 @@ The pipeline consists of the following nodes:
 
 ## Pipeline Configuration
 
-### Step 1: Trigger from GitLab
-
-Configure GitLab to send a trigger to Jenkins upon code push or merge request:
-
-1. Go to **Admin Settings > Network > Inbound** and allow local IPs.
-2. In your project, go to **Settings > Integrations**.
-3. Select **Jenkins**.
-4. Create a new integration and choose the events that will trigger it.
-5. Enter the Jenkins server URL (pointing to the ALB).
-6. Enter the Jenkins pipeline name (project).
-7. Enter Jenkins credentials.
-
-### Step 2: Jenkins Master Job
-
-Setting up the container:
-
-1. Run `docker container ls` to list containers.
-2. Run `docker container logs jenkins_container` to get the initial admin password.
-3. Go to `http://your-alb-dns-name:8080` and set up Jenkins using the password.
-4. Create a job in Jenkins Master to listen for the GitLab integration:
-   - Install the `gitlab-plugin`.
-   - Go to **Manage Jenkins > Configure System**.
-   - In the **GitLab** section, enable the integration.
-   - Add Jenkins credential provider.
-   - Paste the GitLab API token.
-   - Enter the GitLab host URL.
-   - Test the connection.
-   - Configure the job to trigger the pipeline execution on the Jenkins Worker:
-     - On the pipeline, select the GitLab connection.
-     - Choose what triggers to accept.
-     - Add DockerHub integration.
-     - Add credentials (username and password) and give it an ID.
-
-### Step 3: Pipeline Execution on Jenkins Worker
-
-Setting up the container:
-
-1. Build and run the image.
-2. Go to Jenkins Master and add a new node. Give it a descriptive name.
-3. Paste `/var/jenkins_home` in the **Remote root directory** and create the node.
-4. Click on the new node.
-5. Run `docker exec -it <id> /bin/bash` to access the container.
-6. Download and execute the Jenkins agent jar file.
-7. Define the pipeline steps in a `Jenkinsfile`.
-
-### Step 4: Deployment to Target Instance
-
-**EC2**:
-
-1. Launch an EC2 instance and install Docker.
-2. Allow SSH from the private IP of the worker instance in the security group.
-3. Log in to DockerHub.
-
-**Jenkins Master**:
-
-1. Install the `ssh-agent` plugin.
-2. Add SSH credentials (username with private key).
-   - Username: `ec2-user`
-   - Paste the private key downloaded when the instance was created.
-
-**Jenkins Worker**:
-
-1. Insert the private key into Jenkins master credentials and use it in the pipeline.
 
