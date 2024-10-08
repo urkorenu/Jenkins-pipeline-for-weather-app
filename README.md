@@ -83,6 +83,4 @@ The pipeline is designed for seamless application deployment using a combination
 - Host the NAT instance in the public subnet.
 - Ensure proper routing and security group configuration for secure internet access.
 
-## Pipeline Configuration
-
 
