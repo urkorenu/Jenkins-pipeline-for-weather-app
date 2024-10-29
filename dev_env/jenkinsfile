@@ -1,0 +1,83 @@
+def namespace_name = ''
+def build_entered = ''
+
+pipeline {
+    parameters {
+        string(name: 'param1', defaultValue: 'default-namespace', description: 'Namespace name')
+        string(name: 'param2', defaultValue: '', description: 'Build entered value')
+    }
+
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')  
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        AWS_DEFAULT_REGION = 'eu-north-1'
+    }
+
+    agent {
+        docker {
+            label 'node_for_docker'
+            image 'urkoren/jenkins-worker:1'
+            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+
+    stages {
+        stage("Set Namespace and Build Entered") {
+            steps { 
+                script {
+                    namespace_name = params.param1
+                    build_entered = params.param2
+                }
+            }
+        }
+        
+        stage("Clone Git Repository") {
+            steps {
+                checkout scmGit(branches: [[name: "refs/heads/test"]],
+                    extensions: [],
+                    userRemoteConfigs: [[credentialsId: 'git-cred2',
+                    url: 'http://13.50.133.63/root/weatherapp']])
+            }
+        }
+
+        stage('Setup EKS') {
+            steps {
+                sh 'aws eks update-kubeconfig --name production-test-cluster --region $AWS_DEFAULT_REGION'
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    sh """
+                    helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+                    helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver/
+                    helm repo update
+                    helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
+                        --namespace kube-system \
+                        --set enableVolumeScheduling=true \
+                        --set enableVolumeResizing=true \
+                        --set enableVolumeSnapshot=true
+                    """
+                    
+                    sh 'kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/name=ingress-nginx --timeout=120s'
+
+                    // Extract the Load Balancer DNS name using AWS CLI in the Groovy script
+                    def lbDns = sh(script: 'kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"', returnStdout: true).trim()
+                    
+                    sh """
+                    kubectl create namespace test --dry-run=client -o yaml | kubectl apply -f -
+                    helm upgrade --install "my-release" "./helm" \
+                        --set ingress.host="${lbDns}" \
+                        --set image.tag="${build_entered}" \
+                        --namespace "${namespace_name}" \
+                    
+                    
+                    echo "Helm deployment completed successfully with Load Balancer DNS: ${lbDns}"
+                    """
+                }
+            }
+        }
+    }
+}
+

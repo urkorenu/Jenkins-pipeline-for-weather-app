@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create ENV</title>
+</head>
+<body>
+    <h1>Create ENV</h1>
+    
+    <label for="param1">Branch name:</label>
+    <input type="text" id="param1" name="param1">
+    
+    <label for="param2">Build nubmer:</label>
+    <input type="text" id="param2" name="param2">
+    
+    <button onclick="sendRequest()">Send Request</button>
+    
+    <script>
+        function sendRequest() {
+            const param1 = document.getElementById('param1').value;
+            const param2 = document.getElementById('param2').value;
+            const url = `http://docker:1234@13.51.169.201:8080/job/developer%20enviroment/build?token=abc-123&param1=${encodeURIComponent(param1)}&param2=${encodeURIComponent(param2)}`;
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
+

@@ -1,22 +1,54 @@
-#!bin/bash
+#! /bin/bash
 
-sudo apt-get update -y
-sudo apt-get install ca-certificates curl gnupg lsb-release -y
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update -y
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+# Script that initiate your image on minikube env
+
+read -p "Enter image: " repo
+read -p "Enter tag: " tag
+echo $repo -- $tag
+echo ------------------------
+echo Install docker
+echo ------------------------
+
+if [[ $(sudo systemctl status docker | grep active | awk {'print $2'}) != active ]]; then
+    sudo apt install docker.io
+fi
 
 sudo usermod -aG docker $USER
-newgrp docker
+# newgrp docker
 
-sudo apt install -y curl wget apt-transport-https
+echo ------------------------
+echo Install helm
+echo ------------------------
 
-curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-chmod +x ./kubectl
-sudo mv ./kubectl /usr/local/bin/kubectl
+#install helm
+wget https://get.helm.sh/helm-v3.9.3-linux-amd64.tar.gz
+tar xvf helm-v3.9.3-linux-amd64.tar.gz
+sudo mv linux-amd64/helm /usr/local/bin
+rm helm-v3.9.3-linux-amd64.tar.gz
+rm -rf linux-amd64
 
+echo ------------------------
+echo Install minikube locally
+echo ------------------------
+
+# Download and Install Minikube Binary
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-minikube start --driver=docker
+# Install Kubectl tool
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# start minikube
+minikube start
+
+echo ------------------------
+echo Start the app
+echo ------------------------
+helm upgrade --install dev-app helm --set image.repo="$repo" --set image.tag="$tag"
+
+svc_port=$(kubectl get svc dev-app -o jsonpath='{.spec.ports[?(@.nodePort)].nodePort}')
+mini_ip=$(minikube ip)
+echo The app running on "$mini_ip:$svc_port"
+
