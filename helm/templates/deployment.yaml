@@ -3,11 +3,6 @@ kind: Deployment
 metadata:
   name: app-deployment
 spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 25%
   replicas: {{ .Values.replicaCount | default 1 }}
   selector:
     matchLabels:
@@ -20,19 +15,9 @@ spec:
       containers:
       - name: {{ .Values.appName }}
         image: "{{ .Values.image.repository }}/{{ .Values.image.myimage }}:{{ .Values.image.tag }}"
-        volumeMounts:
-        - mountPath: "/app/history/"
-          name: demo-storage
         ports:
         - containerPort: {{ .Values.service.targetPort }}
         env:
         - name: FLASK_ENV
           value: "production"
-        envFrom:
-        - configMapRef:
-            name: demo-config2
-      volumes:
-      - name: demo-storage
-        persistentVolumeClaim:
-          claimName: demo-ebs-volume-claim
 
