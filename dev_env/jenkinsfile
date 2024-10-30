@@ -8,6 +8,8 @@ pipeline {
     }
 
     environment {
+        registry_app = "urkoren/test-eks"
+        registryCredential = 'docker-cred'
         AWS_ACCESS_KEY_ID = credentials('aws-access-key')  
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_DEFAULT_REGION = 'eu-north-1'
@@ -27,6 +29,9 @@ pipeline {
                 script {
                     namespace_name = params.param1
                     build_entered = params.param2
+
+                    echo "Namespace Name: ${namespace_name}"
+                    echo "Build Entered: ${build_entered}"
                 }
             }
         }
@@ -51,13 +56,6 @@ pipeline {
                 script {
                     sh """
                     helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
-                    helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver/
-                    helm repo update
-                    helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
-                        --namespace kube-system \
-                        --set enableVolumeScheduling=true \
-                        --set enableVolumeResizing=true \
-                        --set enableVolumeSnapshot=true
                     """
                     
                     sh 'kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/name=ingress-nginx --timeout=120s'
