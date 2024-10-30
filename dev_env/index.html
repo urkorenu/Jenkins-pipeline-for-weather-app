@@ -14,16 +14,15 @@
     <label for="param2">Build nubmer:</label>
     <input type="text" id="param2" name="param2">
     
-    <button onclick="sendRequest()">Send Request</button>
+    <button onclick="sendRequest()">Create</button>
     
     <script>
         function sendRequest() {
             const param1 = document.getElementById('param1').value;
             const param2 = document.getElementById('param2').value;
-            const url = `http://docker:1234@13.51.169.201:8080/job/developer%20enviroment/build?token=abc-123&param1=${encodeURIComponent(param1)}&param2=${encodeURIComponent(param2)}`;
+            const url = `https://vg1emlpfyf.execute-api.eu-north-1.amazonaws.com/create_dev?param1=${encodeURIComponent(param1)}&param2=${encodeURIComponent(param2)})`;
             window.location.href = url;
         }
     </script>
 </body>
 </html>
-
