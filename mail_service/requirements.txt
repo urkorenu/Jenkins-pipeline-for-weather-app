@@ -19,4 +19,4 @@ werkzeug==3.0.3
 zipp==3.19.2
 gunicorn
 requests
-
+flask_cors

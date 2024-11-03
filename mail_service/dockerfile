@@ -5,9 +5,6 @@ COPY ./requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-ARG password_mail
-ARG sender_mail
-
 COPY ./*.py  .
 
 EXPOSE 5001
