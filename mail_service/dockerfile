@@ -3,19 +3,14 @@ WORKDIR /app
 
 COPY ./requirements.txt .
 
-RUN pip install -r requirements.txt \
-    && rm requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
+ARG password_mail
+ARG sender_mail
 
-COPY ./app  .
-FROM builder
+COPY ./*.py  .
 
-WORKDIR /app
+EXPOSE 5001
 
-COPY --from=builder ./app .
-
-EXPOSE 8001
-
-CMD gunicorn --bind 0.0.0.0:8001 wsgi:app
-
+CMD gunicorn --bind 0.0.0.0:5001 --workers=2 wsgi:app
 

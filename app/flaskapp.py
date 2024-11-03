@@ -62,6 +62,8 @@ def post_location():
     if not payload:
         return redirect(url_for("home_page", error=True))
 
+    print(payload)
+
     return render_template(
         "weather_page.html",
         payload=payload,
