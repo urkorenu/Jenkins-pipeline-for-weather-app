@@ -40,7 +40,7 @@ def history():
         return redirect(url_for("post_location", type="file", location=location))
 
 
-@app.get("/result")
+@app.route("/result", methods=["GET", "POST"])
 def post_location():
     """
     Results page

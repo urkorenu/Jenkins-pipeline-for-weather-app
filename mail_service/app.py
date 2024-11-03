@@ -16,10 +16,10 @@ def format_json_content(json_content):
     formatted_content = "Weather Forecast:\n\n"
     for day, data in json_content.items():
         formatted_content += (
-            f"{day} - Date: {data['datetime']}\n"
-            f"  Morning Temperature: {data['temp_morning']}°C\n"
-            f"  Evening Temperature: {data['temp_evening']}°C\n"
-            f"  Humidity: {data['humidity']}%\n\n"
+            f"{day} - Date: {data[1][day]}\n"
+            f"  Day Temperature: {data[2][day]}°C\n"
+            f"  Night Temperature: {data[3][day]}°C\n"
+            f"  Humidity: {data[4][day]}%\n\n"
         )
     return formatted_content
 
