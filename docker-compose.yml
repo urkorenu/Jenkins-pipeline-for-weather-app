@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mail_service_1:
+    image: urkoren/do19:1
+    ports:
+      - "5001:5001"
+    networks:
+      - app-network
+
+  mail_service_2:
+    image: urkoren/mail_service:1
+    ports:
+      - "5002:5001"  # Mapping internal port 5001 to host port 5002
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
