@@ -1,23 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-deployment
+  name: {{ .Release.Name }}-mail-service-1
 spec:
-  replicas: {{ .Values.replicaCount | default 1 }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ .Release.Name }}-mail-service-1
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        app: {{ .Release.Name }}-mail-service-1
     spec:
       containers:
-      - name: {{ .Values.appName }}
-        image: "{{ .Values.image.repository }}/{{ .Values.image.myimage }}:{{ .Values.image.tag }}"
-        ports:
-        - containerPort: {{ .Values.service.targetPort }}
-        env:
-        - name: FLASK_ENV
-          value: "production"
+        - name: mail-service-1
+          image: "{{ .Values.image.repository }}/{{ .Values.image.myimage }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+        - name: mail-service-2
+          image: "{{ .Values.image.repository }}/{{ .Values.image.myimage2 }}:{{ .Values.image.tag2 }}"
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+
 

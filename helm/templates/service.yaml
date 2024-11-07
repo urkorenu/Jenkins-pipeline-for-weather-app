@@ -1,12 +1,24 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.name }}
+  name: {{ .Values.service.name }}-1
 spec:
   type: {{ .Values.service.type }}
   selector:
     app: {{ .Values.appName }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
+    - port: {{ .Values.service.port1 }}
+      targetPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}-2
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Values.appName }}
+  ports:
+    - port: {{ .Values.service.port2 }}
+      targetPort: 5001
 
