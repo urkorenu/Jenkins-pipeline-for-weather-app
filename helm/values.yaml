@@ -1,29 +1,17 @@
-# General app name
 appName: weather-app
-
-# This will set the replicaset count 
 replicaCount: 4
 
 image:
-  # Name of the repo 
   repository: urkoren
-
-  # Name of the image
   myimage: do19
+  myimage2: mail_service
+  tag: 1
+  tag2: 2
 
-  # Tag of the image
-  tag: 200
-
-ingress:
-  # Host url
-  host: a2cc7898e48964f1b81d08766978fdfb-855513384.eu-north-1.elb.amazonaws.com
-
-# This is for setting up a service 
 service:
-  # Name of the service
   name: app-service
-  # This sets the service type 
-  type: LoadBalancer
-  # This sets the ports 
-  port: 80
+  type: "ClusterIP"
+  port1: 5001
+  port2: 5002
   targetPort: 5001
+

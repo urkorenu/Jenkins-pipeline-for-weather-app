@@ -111,23 +111,11 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
-                    helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver/
-                    helm repo update
-                    helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
-                        --namespace kube-system \
-                        --set enableVolumeScheduling=true \
-                        --set enableVolumeResizing=true \
-                        --set enableVolumeSnapshot=true
-                    '''
+                    sh 'helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace'
                     sh 'kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/name=ingress-nginx --timeout=120s'
-
                     // Extract Load Balancer DNS name
                     def lbDns = sh(script: 'kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"', returnStdout: true).trim()
-
                     sh "helm upgrade --install 'my-release' './helm' --set ingress.host=${lbDns}"
-
                     echo "Helm deployment completed successfully with Load Balancer DNS: ${lbDns}"
                 }
             }

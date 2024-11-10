@@ -1,23 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-deployment
+  name: my-release-mail-service
 spec:
-  replicas: {{ .Values.replicaCount | default 1 }}
+  replicas: 4
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: weather-app
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        app: weather-app
     spec:
       containers:
-      - name: {{ .Values.appName }}
-        image: "{{ .Values.image.repository }}/{{ .Values.image.myimage }}:{{ .Values.image.tag }}"
+      - name: mail-service-1
+        image: urkoren/do19:1
         ports:
-        - containerPort: {{ .Values.service.targetPort }}
-        env:
-        - name: FLASK_ENV
-          value: "production"
+        - containerPort: 5001  # Expose port 5001 for mail-service-1
+      - name: mail-service-2
+        image: urkoren/mail_service:2
+        ports:
+        - containerPort: 5002  # Expose port 5002 for mail-service-2
+
 
