@@ -6,7 +6,7 @@ image:
   myimage: do19
   myimage2: mail_service
   tag: 1
-  tag2: 1
+  tag2: 2
 
 service:
   name: app-service

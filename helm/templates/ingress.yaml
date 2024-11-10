@@ -15,7 +15,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ $.Values.service.name }}
+                name: app-service-1
                 port:
                   number: 5001
 

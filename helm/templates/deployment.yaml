@@ -18,7 +18,7 @@ spec:
         ports:
         - containerPort: 5001  # Expose port 5001 for mail-service-1
       - name: mail-service-2
-        image: urkoren/mail_service:1
+        image: urkoren/mail_service:2
         ports:
         - containerPort: 5002  # Expose port 5002 for mail-service-2
 
