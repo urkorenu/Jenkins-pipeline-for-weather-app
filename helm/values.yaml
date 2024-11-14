@@ -8,6 +8,10 @@ image:
   tag: 1
   tag2: 2
 
+ingress:
+  host: "example.com"
+
+
 service:
   name: app-service
   type: "ClusterIP"

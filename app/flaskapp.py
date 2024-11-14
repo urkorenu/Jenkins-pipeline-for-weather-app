@@ -62,16 +62,18 @@ def post_location():
     if not payload:
         return redirect(url_for("home_page", error=True))
 
-    print(payload)
+    ingress_host = os.getenv('INGRESS_HOST', 'default-value')
 
     return render_template(
         "weather_page.html",
         payload=payload,
         len=len(payload),
         title=f"Weather of: {location}",
-        bg_color=bg_color
+        bg_color=bg_color,
+        ingress_host=ingress_host
     )
 
 
 if __name__ == "__main__":
     app.run()
+

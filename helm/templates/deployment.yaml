@@ -1,5 +1,3 @@
-# helm/templates/deployment.yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,19 +6,24 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: weather-app
-      service: weather
+      app: weather-service  # This must match the pod labels
   template:
     metadata:
       labels:
-        app: weather-app
-        service: weather
+        app: weather-service  # This must match the service selector
+        service: weather     # This matches the service selector in service.yaml
     spec:
       containers:
         - name: weather-service
-          image: urkoren/do19:1
+          image: urkoren/do19:8
           ports:
             - containerPort: 5001
+          env:
+            - name: INGRESS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: weather-app-config
+                  key: INGRESS_HOST
 
 ---
 apiVersion: apps/v1
@@ -32,16 +35,16 @@ spec:
   selector:
     matchLabels:
       app: weather-app
-      service: mail
+      service: mail  
   template:
     metadata:
       labels:
-        app: weather-app
+        app: weather-app  
         service: mail
     spec:
       containers:
         - name: mail-service
-          image: urkoren/mail_service:2
+          image: urkoren/mail_service:3
           ports:
             - containerPort: 5002
 

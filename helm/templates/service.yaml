@@ -2,9 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: weather-service
+  labels:
+    app: weather-app
+    service: weather
 spec:
   selector:
-    app: weather-app
+    app: weather-service  
     service: weather
   ports:
     - protocol: TCP
@@ -17,9 +20,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mail-service
+  labels:
+    app: weather-app
+    service: mail
 spec:
   selector:
-    app: weather-app
+    app: weather-app  
     service: mail
   ports:
     - protocol: TCP
